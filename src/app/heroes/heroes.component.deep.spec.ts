@@ -5,20 +5,12 @@ import { HeroService } from "../hero.service";
 import { of } from "rxjs/observable/of";
 import { Hero } from "../hero";
 import { By } from "@angular/platform-browser";
+import { HeroComponent } from "../hero/hero.component";
 
-describe('Heroes Component - shallow test', () => {
+describe('Heroes Component - deep test', () => {
   let fixture: ComponentFixture<HeroesComponent>;
   let mockHeroService;
   let HEROES;
-
-  @Component({
-    selector: 'app-hero',
-    template: '<div></div>'
-  })
-  class MockHeroComponent {
-    @Input() hero: Hero
-  }
-
 
   beforeEach(() => {
     mockHeroService = jasmine.createSpyObj(['getHeroes', 'addHero', 'deleteHero']);
@@ -29,29 +21,32 @@ describe('Heroes Component - shallow test', () => {
     ];
 
     TestBed.configureTestingModule({
-      declarations: [HeroesComponent, MockHeroComponent],
+      declarations: [HeroesComponent, HeroComponent],
       providers: [
         {
           provide: HeroService, useValue: mockHeroService
         }
       ],
-      // schemas: [NO_ERRORS_SCHEMA]
+      schemas: [NO_ERRORS_SCHEMA]
     })
     fixture = TestBed.createComponent(HeroesComponent);
+
   });
 
-  it('should set heroes correctly from the service', () => {
-    mockHeroService.getHeroes.and.returnValue(of(HEROES))
+  it('should render each hero as a HeroComponent', () => {
+    mockHeroService.getHeroes.and.returnValue(of(HEROES));
+
+    // run ngOnInit
     fixture.detectChanges();
 
-    expect(fixture.componentInstance.heroes.length).toBe(3);
+    const heroComponentsDebugElements = fixture.debugElement.queryAll(By.directive(HeroComponent))
+    expect(heroComponentsDebugElements.length).toBe(3);
+
+    HEROES.forEach((hero, index) => {
+      const actualHero = heroComponentsDebugElements[index].componentInstance.hero
+
+      expect(actualHero).toEqual(hero);
+    });
   });
 
-  it('should create on li for each hero', () => {
-    mockHeroService.getHeroes.and.returnValue(of(HEROES))
-    fixture.detectChanges();
-
-    const debugElementsLi = fixture.debugElement.queryAll(By.css('li')).length
-    expect(debugElementsLi).toBe(3);
-  });
 });
